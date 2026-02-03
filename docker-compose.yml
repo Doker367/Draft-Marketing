@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  draft-marketing:
+    container_name: draft-marketing-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_PATH: /larcad
+    restart: unless-stopped
+    
+    # NO expose ports - accessed via nginx-proxy
+    # ports:
+    #   - "3000:80"  # DISABLED for reverse proxy setup
+    
+    networks:
+      - web_proxy_network
+    
+    # Environment variables for nginx-proxy
+    environment:
+      - VIRTUAL_HOST=midominio.com
+      - VIRTUAL_PATH=/larcad
+      - VIRTUAL_PORT=80
+      - LETSENCRYPT_HOST=midominio.com
+      - LETSENCRYPT_EMAIL=Draft.mkt@Hotmail.com
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Labels for nginx-proxy auto-discovery
+    labels:
+      - "traefik.enable=false"
+      - "nginx-proxy.enable=true"
+      - "app.name=draft-marketing"
+      - "app.environment=production"
+
+# External network (must be created before deployment)
+networks:
+  web_proxy_network:
+    external: true
