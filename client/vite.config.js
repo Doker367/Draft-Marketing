@@ -5,6 +5,10 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  
+  // Base path for production (subpath deployment)
+  base: process.env.VITE_BASE_PATH || '/',
+  
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -22,6 +26,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: {
@@ -30,7 +41,11 @@ export default defineConfig({
           animations: ['framer-motion', 'gsap'],
           three: ['three', '@react-three/fiber', '@react-three/drei'],
         },
+        assetFileNames: 'assets/[name].[hash][extname]',
+        chunkFileNames: 'assets/[name].[hash].js',
+        entryFileNames: 'assets/[name].[hash].js',
       },
     },
+    chunkSizeWarningLimit: 1000,
   },
 })
